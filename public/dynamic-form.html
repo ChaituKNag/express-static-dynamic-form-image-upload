@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Dynamic Form</title>
+</head>
+<body>
+    <div id="myForm">
+        <input type="file" name="imageFile" id="imageFile">
+        <button id="mySubmitButton">Submit</button>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <script>
+        jQuery(function () {
+            jQuery('#imageFile').on('change', editImageHandler);
+            jQuery('#mySubmitButton').on('click', imageUploadHandler);
+
+            var imageUploadSrc = null;
+
+            function imageUploadHandler() {
+                var imageFormData = new FormData();
+                imageFormData.append('imageFile', imageUploadSrc);
+                imageFormData.append('myFieldTwo', 'blahblahblah');
+                imageFormData.append('requestType', 'imageUploaded');
+                imageFormData.append('CSRFToken', 'my csr token');
+
+                jQuery.ajax({
+                    url: '/upload',
+                    method: 'POST',
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    data: imageFormData,
+                    success: function (resp) {
+                        console.log(resp);
+                    },
+                    error: function (err) {
+                        console.log("there was an error", err);
+                    }
+                })
+            }
+
+            function editImageHandler(event) {
+                var input = event.target;
+        
+                if (input.files && input.files[0]) {
+                    var theImage = input.files[0];
+        
+                    var reader = new FileReader();
+                
+                    reader.onload = function (e) {
+                        console.log(e.target.result);
+                        imageUploadSrc = dataURItoBlob(e.target.result);
+                    }
+                
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            function dataURItoBlob(dataURI) {
+                // convert base64/URLEncoded data component to raw binary data held in a string
+                var byteString;
+                if (dataURI.split(',')[0].indexOf('base64') >= 0)
+                    byteString = atob(dataURI.split(',')[1]);
+                else
+                    byteString = unescape(dataURI.split(',')[1]);
+            
+                // separate out the mime component
+                var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            
+                // write the bytes of the string to a typed array
+                var ia = new Uint8Array(byteString.length);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+            
+                return new Blob([ia], {type:mimeString});
+            }
+        })
+
+    </script>
+</body>
+</html>
